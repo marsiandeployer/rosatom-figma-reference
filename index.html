@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Росатом — эталоны Figma</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, Arial, sans-serif; background: #f3f5f7; color: #15191d; }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; }
+    header, nav, main { width: min(100% - 32px, 1984px); margin-inline: auto; }
+    header { padding: 32px 0 20px; }
+    h1 { margin: 0 0 8px; font-size: clamp(26px, 3vw, 42px); letter-spacing: -.03em; }
+    header p { margin: 0; color: #66717b; }
+    nav { position: sticky; top: 0; z-index: 2; padding: 12px 0; background: rgb(243 245 247 / 94%); backdrop-filter: blur(10px); }
+    .frame-list { display: flex; gap: 8px; padding: 0; margin: 0; overflow-x: auto; list-style: none; }
+    .frame-list a { display: block; white-space: nowrap; padding: 8px 11px; border: 1px solid #d7dde2; border-radius: 8px; background: #fff; color: #1d596d; text-decoration: none; font-size: 13px; }
+    main { padding: 16px 0 64px; }
+    .group-title { margin: 18px 0; font-size: 24px; }
+    figure { margin: 0 0 40px; scroll-margin-top: 80px; }
+    figcaption { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: baseline; margin-bottom: 10px; }
+    figcaption strong { font-size: 18px; }
+    figcaption span, figcaption a { color: #66717b; font-size: 13px; }
+    .preview { width: 100%; overflow: auto; border: 1px solid #d7dde2; background: #fff; }
+    .preview img { display: block; width: 1920px; height: 1080px; max-width: none; }
+    .error { padding: 24px; color: #9b2226; background: #fff; border: 1px solid #e6b8ba; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Эталонные макеты Figma</h1>
+    <p>22 макета из Figma, экспорт 1× без изменения размера. Это эталоны дизайна, а не снимки работающего сайта. Все макеты: desktop 1920 × 1080.</p>
+  </header>
+  <nav aria-label="Список макетов"><ol class="frame-list" id="frame-list"></ol></nav>
+  <main id="catalog"><p>Загрузка каталога…</p></main>
+  <script>
+    const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    })[character]);
+
+    fetch('manifest.json')
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then(({ frames }) => {
+        const list = document.querySelector('#frame-list');
+        const catalog = document.querySelector('#catalog');
+        list.innerHTML = frames.map((frame) => `
+          <li><a href="#frame-${escapeHtml(frame.id.replace(':', '-'))}">${escapeHtml(frame.order)} · ${escapeHtml(frame.figmaFrame)}</a></li>
+        `).join('');
+        catalog.innerHTML = `<h2 class="group-title">Page 1</h2>` + frames.map((frame) => {
+          const anchor = `frame-${frame.id.replace(':', '-')}`;
+          return `
+            <figure id="${escapeHtml(anchor)}">
+              <figcaption>
+                <strong>${escapeHtml(frame.order)}. ${escapeHtml(frame.figmaFrame)}</strong>
+                <span>${escapeHtml(frame.viewport)} · ${escapeHtml(frame.width)} × ${escapeHtml(frame.height)}</span>
+                <span>Frame ID: ${escapeHtml(frame.id)}</span>
+                <a href="${escapeHtml(frame.url)}" target="_blank" rel="noreferrer">Открыть во Figma</a>
+                <a href="${escapeHtml(frame.file)}" download>${escapeHtml(frame.file.split('/').pop())}</a>
+              </figcaption>
+              <div class="preview">
+                <img src="${escapeHtml(frame.file)}" width="${escapeHtml(frame.width)}" height="${escapeHtml(frame.height)}" alt="${escapeHtml(frame.figmaFrame)}" loading="lazy">
+              </div>
+            </figure>`;
+        }).join('');
+      })
+      .catch((error) => {
+        document.querySelector('#catalog').innerHTML = `<p class="error">Не удалось загрузить manifest.json: ${escapeHtml(error.message)}</p>`;
+      });
+  </script>
+</body>
+</html>
