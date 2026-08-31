@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ручная сверка Rosatom — 22 экрана</title>
+  <style>
+    :root { color-scheme: light; --ink:#172126; --muted:#66747d; --line:#dce4e8; --paper:#f5f7f8; --white:#fff; --blue:#0878b9; --green:#18794e; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:14px/1.45 Arial, sans-serif; }
+    header { position:sticky; top:0; z-index:5; background:rgba(255,255,255,.96); border-bottom:1px solid var(--line); }
+    .bar { max-width:1540px; margin:auto; padding:18px 24px; display:grid; grid-template-columns:1fr auto; gap:20px; align-items:center; }
+    h1 { margin:0 0 3px; font-size:22px; }
+    .subtitle, .meta { color:var(--muted); }
+    .progress { min-width:230px; }
+    .progress-line { display:flex; justify-content:space-between; margin-bottom:7px; font-weight:700; }
+    .track { height:8px; overflow:hidden; border-radius:999px; background:#e5ecef; }
+    .fill { width:0; height:100%; background:var(--green); transition:width .2s; }
+    main { max-width:1540px; margin:24px auto 60px; padding:0 24px; }
+    .tools { display:flex; gap:8px; margin-bottom:18px; }
+    button { min-height:38px; border:1px solid #b9c7ce; border-radius:8px; background:#fff; color:var(--ink); padding:0 14px; font-weight:700; cursor:pointer; }
+    button:hover { border-color:#70838d; }
+    button:active { transform:translateY(1px); }
+    .group { margin:0 0 28px; scroll-margin-top:105px; }
+    .group-title { margin:0; padding:0 0 10px; font-size:17px; border-bottom:2px solid var(--ink); }
+    .head, .row { display:grid; grid-template-columns:48px minmax(270px,1fr) minmax(300px,1.15fr) 115px minmax(260px,.9fr); gap:12px; align-items:center; }
+    .head { padding:10px 12px 7px; color:var(--muted); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; }
+    .row { min-height:82px; padding:12px; background:var(--white); border-top:1px solid var(--line); }
+    .row:last-child { border-bottom:1px solid var(--line); }
+    .row.done { background:#edf8f2; }
+    .num { font-size:18px; font-weight:700; color:#88959c; }
+    .screen-name { display:block; margin-bottom:5px; font-weight:700; }
+    .frame { color:var(--muted); font-size:12px; }
+    a { color:#075f91; overflow-wrap:anywhere; text-underline-offset:3px; }
+    .ready { width:100%; }
+    .ready[aria-pressed="true"] { border-color:var(--green); background:var(--green); color:#fff; }
+    textarea { width:100%; min-height:54px; resize:vertical; border:1px solid #b9c7ce; border-radius:7px; padding:9px 10px; font:inherit; color:var(--ink); background:#fff; }
+    textarea:focus { outline:3px solid rgba(8,120,185,.18); border-color:var(--blue); }
+    @media (max-width:900px) {
+      .bar { grid-template-columns:1fr; }
+      .head { display:none; }
+      .row { grid-template-columns:38px 1fr; align-items:start; }
+      .row > :not(.num) { grid-column:2; }
+      .progress { min-width:0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <div>
+        <h1>Ручная сверка Rosatom</h1>
+        <div class="subtitle">22 экрана, сгруппированные по типу интерфейса. Сначала откройте PNG, затем соответствующий экран сайта.</div>
+      </div>
+      <div class="progress" aria-live="polite">
+        <div class="progress-line"><span>Проверено</span><span id="progress-text">0 из 22</span></div>
+        <div class="track"><div class="fill" id="progress-fill"></div></div>
+      </div>
+    </div>
+  </header>
+  <main>
+    <div class="tools"><button type="button" id="show-all">Показать все</button><button type="button" id="show-pending">Только непроверенные</button></div>
+    <div id="list"></div>
+  </main>
+  <script>
+    const referenceBase = 'https://marsiandeployer.github.io/rosatom-figma-reference/';
+    const siteBase = 'https://rosatom.wpmix.net';
+    const groups = [
+      ['Главные экраны', [
+        ['Картотека — светлая тема','8:637','assets/page-1-frame-57-8-637-1920x1080.png','/'],
+        ['Картотека — тёмная тема','2:69','assets/page-1-frame-55-2-69-dark-1920x1080.png','/?theme=dark']
+      ]],
+      ['Календарь и администрирование', [
+        ['Календарь посещений','12:958','assets/page-1-frame-60-12-958-1920x1080.png','/calendar?view=month&date=2025-12'],
+        ['Сервер DICOM','27:307','assets/page-1-frame-61-27-307-1920x1080.png','/admin/server-dicom']
+      ]],
+      ['Карточка пациента', [
+        ['Посещения — карточки','11:295','assets/page-1-frame-59-11-295-1920x1080.png','/patients/9399-25?tab=visits&mode=cards'],
+        ['Посещения — таблица','32:1574','assets/page-1-frame-66-32-1574-1920x1080.png','/patients/9399-25?tab=visits&mode=table'],
+        ['Журнал изменений','40:486','assets/page-1-frame-67-40-486-1920x1080.png','/patients/9399-25?tab=audit'],
+        ['История лечения','40:804','assets/page-1-frame-68-40-804-1920x1080.png','/patients/9399-25?tab=treatment-history']
+      ]],
+      ['Модальные окна пациента', [
+        ['Редактирование — компактная форма','27:891','assets/page-1-frame-63-27-891-1920x1080.png','/patients/9399-25?modal=edit&variant=compact'],
+        ['Редактирование — расширенная форма','32:658','assets/page-1-frame-64-32-658-1920x1080.png','/patients/9399-25?modal=edit&variant=expanded'],
+        ['Загрузка исследования','32:1214','assets/page-1-frame-65-32-1214-1920x1080.png','/patients/9399-25?modal=upload-study']
+      ]],
+      ['Рабочее место лечения', [
+        ['Оконтуривание','79:506','assets/page-1-frame-69-79-506-1920x1080.png','/patients/9399-25/courses/2025-03/visits/2025-07-30/contouring'],
+        ['Оконтуривание — DVH','82:2397','assets/page-1-frame-2087328288-82-2397-1920x1080.png','/patients/9399-25/courses/2025-03/visits/2025-07-30/contouring?chart=dvh'],
+        ['Оконтуривание — ограничения структур','82:3843','assets/page-1-frame-2087328290-82-3843-1920x1080.png','/patients/9399-25/courses/2025-03/visits/2025-07-30/contouring?panel=structures&state=constraint-warning'],
+        ['Реконструкция аппликатора','80:1157','assets/page-1-frame-71-80-1157-1920x1080.png','/patients/9399-25/courses/2025-03/visits/2025-07-30/reconstruction'],
+        ['Постановка задачи','81:625','assets/page-1-frame-72-81-625-1920x1080.png','/patients/9399-25/courses/2025-03/visits/2025-07-30/reconstruction?modal=task-setup'],
+        ['План лечения и гистограмма дозы','81:1530','assets/page-1-frame-73-81-1530-1920x1080.png','/patients/9399-25/courses/2025-03/visits/2025-07-30/reconstruction?panel=treatment-plan&chart=dose-histogram'],
+        ['Реконструкция — 3D-план','82:2825','assets/page-1-frame-2087328289-82-2825-1920x1080.png','/patients/9399-25/courses/2025-03/visits/2025-07-30/reconstruction?panel=treatment-plan&view=3d']
+      ]],
+      ['Оптимизация и результат', [
+        ['Параметры оптимизации','87:906','assets/page-1-frame-2087328291-87-906-1920x1080.png','/patients/9399-25/courses/2025-03/visits/2025-07-30/optimization'],
+        ['Отмена посещения','87:2266','assets/page-1-frame-2087328292-87-2266-1920x1080.png','/patients/9399-25/courses/2025-03/visits/2025-07-30/optimization?modal=cancel-visit'],
+        ['Завершение посещения','87:2785','assets/page-1-frame-2087328293-87-2785-1920x1080.png','/patients/9399-25/courses/2025-03/visits/2025-07-30/optimization?modal=complete-visit'],
+        ['Дозовое распределение','87:3166','assets/page-1-frame-2087328294-87-3166-1920x1080.png','/patients/9399-25/courses/2025-03/visits/2025-07-30/dose-distribution?plan=ordinary&status=approved']
+      ]]
+    ];
+    const key = 'rosatom-manual-review-v1';
+    const state = JSON.parse(localStorage.getItem(key) || '{}');
+    const save = () => localStorage.setItem(key, JSON.stringify(state));
+    const list = document.querySelector('#list');
+    let number = 0;
+    for (const [groupName, screens] of groups) {
+      const section = document.createElement('section'); section.className = 'group';
+      section.innerHTML = `<h2 class="group-title">${groupName} <span class="meta">— ${screens.length}</span></h2><div class="head"><span>№</span><span>Оригинал PNG</span><span>Экран сайта</span><span>Статус</span><span>Комментарий</span></div>`;
+      for (const [name, frame, png, path] of screens) {
+        number += 1;
+        const row = document.createElement('div'); row.className = 'row'; row.dataset.frame = frame;
+        row.innerHTML = `<div class="num">${number}</div><div><span class="screen-name">${name}</span><a href="${referenceBase + png}" target="_blank" rel="noopener">Открыть PNG 1920 × 1080</a><div class="frame">Frame ${frame}</div></div><div><a href="${siteBase + path}" target="_blank" rel="noopener">${siteBase + path}</a></div><div><button class="ready" type="button" aria-pressed="false">Готово</button></div><div><textarea aria-label="Комментарий к экрану ${number}" placeholder="Что проверить или исправить"></textarea></div>`;
+        const button = row.querySelector('.ready'); const note = row.querySelector('textarea');
+        const item = state[frame] || {}; button.setAttribute('aria-pressed', String(Boolean(item.done))); note.value = item.note || ''; row.classList.toggle('done', Boolean(item.done));
+        button.addEventListener('click', () => { state[frame] = {...state[frame], done: button.getAttribute('aria-pressed') !== 'true', note: note.value}; save(); refresh(); });
+        note.addEventListener('input', () => { state[frame] = {...state[frame], done: button.getAttribute('aria-pressed') === 'true', note: note.value}; save(); });
+        section.append(row);
+      }
+      list.append(section);
+    }
+    function refresh() {
+      let done = 0;
+      document.querySelectorAll('.row').forEach(row => { const button=row.querySelector('.ready'); const value=Boolean(state[row.dataset.frame]?.done); button.setAttribute('aria-pressed', String(value)); row.classList.toggle('done', value); if(value) done += 1; });
+      document.querySelector('#progress-text').textContent = `${done} из ${number}`;
+      document.querySelector('#progress-fill').style.width = `${done / number * 100}%`;
+    }
+    document.querySelector('#show-all').addEventListener('click', () => document.querySelectorAll('.row').forEach(row => row.hidden=false));
+    document.querySelector('#show-pending').addEventListener('click', () => document.querySelectorAll('.row').forEach(row => row.hidden=Boolean(state[row.dataset.frame]?.done)));
+    refresh();
+  </script>
+</body>
+</html>
