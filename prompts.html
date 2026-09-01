@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>Rosatom — промпты для pixel-perfect переноса Figma в Codex</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink:#172126; --muted:#63717a; --line:#d9e2e7; --paper:#f3f6f8;
+      --white:#fff; --blue:#086ca8; --blue-soft:#e7f2f8; --green:#18794e;
+      --code:#111820; --code-ink:#e8f1f5; --radius:14px;
+    }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--paper); color:var(--ink); font:15px/1.55 Arial, sans-serif; }
+    a { color:#075f91; text-underline-offset:3px; }
+    button { font:inherit; }
+    .topbar { position:sticky; top:0; z-index:20; border-bottom:1px solid var(--line); background:rgba(255,255,255,.96); backdrop-filter:blur(12px); }
+    .topbar-inner { width:min(100% - 32px, 1480px); margin:auto; min-height:58px; display:flex; align-items:center; gap:18px; overflow:auto; }
+    .topbar a { color:var(--ink); font-weight:700; white-space:nowrap; text-decoration:none; }
+    .topbar a:first-child { color:var(--blue); }
+    header, main, footer { width:min(100% - 32px, 1480px); margin-inline:auto; }
+    header { padding:54px 0 30px; }
+    h1 { max-width:1000px; margin:0 0 14px; font-size:clamp(32px,5vw,64px); line-height:1.02; letter-spacing:-.045em; }
+    .lede { max-width:950px; margin:0; color:var(--muted); font-size:18px; }
+    .facts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-top:28px; }
+    .fact { min-height:106px; padding:18px; border:1px solid var(--line); border-radius:var(--radius); background:var(--white); }
+    .fact strong { display:block; font-size:26px; }
+    .fact span { color:var(--muted); }
+    section { margin:34px 0 54px; scroll-margin-top:78px; }
+    .section-head { display:flex; justify-content:space-between; gap:20px; align-items:end; margin-bottom:16px; }
+    h2 { margin:0; font-size:28px; letter-spacing:-.025em; }
+    h3 { margin:0; font-size:19px; }
+    .section-head p, .note { max-width:790px; margin:0; color:var(--muted); }
+    .panel { border:1px solid var(--line); border-radius:var(--radius); background:var(--white); overflow:hidden; }
+    .panel-head { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 16px; border-bottom:1px solid var(--line); }
+    .copy { min-height:38px; padding:0 14px; border:1px solid #9ab0bc; border-radius:8px; background:#fff; color:var(--ink); font-weight:700; cursor:pointer; }
+    .copy:hover { border-color:var(--blue); color:var(--blue); }
+    .copy.copied { border-color:var(--green); color:var(--green); }
+    pre { margin:0; padding:20px; overflow:auto; background:var(--code); color:var(--code-ink); font:13px/1.58 ui-monospace, SFMono-Regular, Consolas, monospace; white-space:pre-wrap; tab-size:2; }
+    .inventory { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .inventory article, .element-card, .screen-card { border:1px solid var(--line); border-radius:var(--radius); background:var(--white); }
+    .inventory article { padding:18px; }
+    .inventory h3 { margin-bottom:8px; }
+    .inventory p { margin:0; color:var(--muted); }
+    .swatches { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .swatch { display:flex; align-items:center; gap:7px; padding:5px 8px; border:1px solid var(--line); border-radius:999px; font:12px ui-monospace, monospace; }
+    .swatch i { width:16px; height:16px; border:1px solid rgba(0,0,0,.12); border-radius:50%; background:var(--c); }
+    .element-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+    .element-card { overflow:hidden; }
+    .element-card .body { padding:16px; }
+    .element-card p { margin:8px 0 0; color:var(--muted); }
+    .screen-tools { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
+    .filter { min-height:38px; padding:0 13px; border:1px solid #aebdc5; border-radius:999px; background:#fff; cursor:pointer; }
+    .filter[aria-pressed="true"] { background:var(--ink); color:#fff; border-color:var(--ink); }
+    .screen-list { display:grid; gap:12px; }
+    .screen-card { overflow:hidden; }
+    .screen-card summary { display:grid; grid-template-columns:52px minmax(240px,.8fr) minmax(320px,1.4fr) auto; gap:14px; align-items:center; padding:16px; cursor:pointer; list-style:none; }
+    .screen-card summary::-webkit-details-marker { display:none; }
+    .screen-card[open] summary { border-bottom:1px solid var(--line); }
+    .number { color:#87949b; font-size:22px; font-weight:700; }
+    .screen-meta { color:var(--muted); font-size:12px; }
+    .tags { display:flex; flex-wrap:wrap; gap:6px; }
+    .tag { padding:4px 8px; border-radius:999px; background:var(--blue-soft); color:#155b80; font-size:12px; }
+    .screen-body { padding:16px; }
+    .links { display:flex; flex-wrap:wrap; gap:14px; margin-bottom:14px; }
+    .screen-body h4 { margin:18px 0 8px; }
+    .screen-body ul { margin:0; padding-left:20px; }
+    .screen-body li + li { margin-top:5px; }
+    .method { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:10px; counter-reset:step; }
+    .method article { min-height:150px; padding:16px; border:1px solid var(--line); border-radius:var(--radius); background:#fff; }
+    .method article::before { counter-increment:step; content:counter(step); display:grid; place-items:center; width:30px; height:30px; margin-bottom:16px; border-radius:50%; background:var(--ink); color:#fff; font-weight:700; }
+    .method p { margin:7px 0 0; color:var(--muted); }
+    .sources { display:grid; gap:8px; }
+    .sources a { display:block; padding:12px 14px; border:1px solid var(--line); border-radius:10px; background:#fff; }
+    footer { padding:0 0 50px; color:var(--muted); }
+    @media (max-width:1000px) {
+      .facts, .inventory { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .method { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .screen-card summary { grid-template-columns:44px 1fr; }
+      .screen-card summary > :nth-child(n+3) { grid-column:2; }
+    }
+    @media (max-width:680px) {
+      .facts, .inventory, .element-grid, .method { grid-template-columns:1fr; }
+      .section-head { display:block; }
+      .section-head p { margin-top:8px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topbar" aria-label="Навигация">
+    <div class="topbar-inner">
+      <a href="#master">Мастер-промпт</a>
+      <a href="#inventory">Инвентарь</a>
+      <a href="#elements">Промпты элементов</a>
+      <a href="#screens">22 экрана</a>
+      <a href="#method">Методика</a>
+      <a href="compare.html">Ручная сверка</a>
+      <a href="index.html">Исходные PNG</a>
+    </div>
+  </nav>
+
+  <header>
+    <h1>Pixel-perfect Rosatom: набор промптов для Codex</h1>
+    <p class="lede">Кумулятивный промпт, инвентарь интерфейса, отдельные проверки элементов и 22 поэкранных задания. Цель — измеримое совпадение production с исходными кадрами Figma 1920 × 1080, без подмены эталонов и без декларации «готово» до полного повторного прогона.</p>
+    <div class="facts">
+      <div class="fact"><strong>22</strong><span>исходных кадра Figma</span></div>
+      <div class="fact"><strong>1920×1080</strong><span>единый контрольный viewport, DPR 1</span></div>
+      <div class="fact"><strong>20</strong><span>групп элементов для отдельной сверки</span></div>
+      <div class="fact"><strong>AE = 0</strong><span>строгая конечная цель; иначе статус partial</span></div>
+    </div>
+  </header>
+
+  <main>
+    <section id="master">
+      <div class="section-head">
+        <div><h2>Кумулятивный мастер-промпт</h2><p>Вставляйте целиком в Codex из корня проекта. Он задаёт результат, границы, evidence и stopping rule, оставляя агенту выбор конкретной реализации.</p></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Основной прогон: Figma → код → production → 22 diff</h3><button class="copy" data-copy="master-prompt">Скопировать</button></div>
+        <pre id="master-prompt">Ты работаешь над существующим веб-интерфейсом Rosatom. Доведи production https://rosatom.wpmix.net до измеримого pixel-perfect совпадения со всеми 22 эталонами из Figma:
+
+Figma: https://www.figma.com/design/Y5v86MPzSxAJLZktrC3rBT/РОС--Copy-?node-id=0-1
+Каталог эталонов: https://marsiandeployer.github.io/rosatom-figma-reference/
+Таблица route ↔ PNG: https://marsiandeployer.github.io/rosatom-figma-reference/compare.html
+Контрольный viewport для каждого кадра: 1920×1080, deviceScaleFactor 1, zoom 100%.
+
+ОЖИДАЕМЫЙ РЕЗУЛЬТАТ
+- Каждый из 22 production-route воспроизводит правильное состояние, данные и интерактивные слои исходного кадра.
+- Геометрия, типографика, цвета, прозрачность, SVG/PNG, медицинские изображения, графики, таблицы, формы, overlay, z-index и состояния совпадают с соответствующим PNG.
+- Для каждого route сохранены reference, actual, absolute diff, overlay 50/50 и метрики AE/RMSE.
+- После последней правки выполнен полный повторный прогон всех 22 экранов в одинаковом окружении.
+- Строгая цель — AE=0 на всех 22 кадрах. Если хотя бы один кадр не достиг AE=0, не называй результат 100% pixel-perfect: укажи PARTIAL, точные остаточные зоны, метрики и причинные гипотезы.
+
+ГРАНИЦЫ
+- Прочитай действующие инструкции проекта, README, package.json, маршруты, компоненты, CSS, ассеты, шрифты и текущий audit script до изменений.
+- Сохраняй существующий стек и компоненты. Не добавляй библиотеку, если задача решается штатными средствами.
+- Не заменяй точный ассет эмодзи, Unicode-глифом, случайной иконкой, CSS-имитацией или похожей картинкой.
+- Не обновляй, не маскируй и не перерисовывай golden PNG, чтобы скрыть расхождение. Не ослабляй diff-порог.
+- Не фиксируй симптом локальными magic numbers, пока не определена общая причинная группа и затронутые экраны.
+- Не меняй production до локальной сборки, тестов и полного screenshot/diff. После публикации отдельно повтори те же 22 проверки на production.
+
+FIGMA MCP — ИСТОЧНИК ДИЗАЙНА
+1. Используй get_metadata только как карту большого файла. Для каждого экрана работай с точным node ID из таблицы.
+2. Для точного node вызови get_design_context, затем get_variable_defs и get_screenshot. Если есть инстансы, вызови get_code_connect_map и переиспользуй реальные компоненты.
+3. Для растров, SVG и исходных изображений используй download_assets; сохраняй исходный формат и размеры. Не считай screenshot заменой структурного context.
+4. Если один frame слишком тяжёлый, разбивай его на логические секции/компоненты и запрашивай их отдельно.
+5. Отделяй подтверждённые Figma-значения от вычисленных по PNG и от допущений.
+
+ЗАФИКСИРУЙ BASELINE
+- Проверь текущий git diff и не затрагивай чужие изменения.
+- Запусти существующие build/tests и зафиксируй их статус отдельно.
+- Сними все 22 actual PNG в Chromium при 1920×1080, DPR 1, одинаковой версии браузера/ОС/шрифтов.
+- Дождись document.fonts.ready, завершения network, стабильного layout и нужного route/state. Отключай анимации только одинаково для всех кадров; курсор и caret должны быть стабильны.
+- Запиши для каждого кадра AE, AE%, RMSE и bounding box отличий. Открой и визуально проверь reference, actual, diff и overlay.
+- Проверь console/network: 4xx/5xx, отсутствующие font/image/SVG и ошибки JavaScript — отдельные blockers.
+
+ИНВЕНТАРЬ ПЕРЕД ПРАВКАМИ
+Составь таблицу по каждому из 22 кадров: node ID, route, крупные области, повторные компоненты, уникальные элементы, состояние, шрифты, ассеты, цвета, spacing/radius, overlay и самые крупные diff-регионы. Сопоставь каждый Figma-компонент с существующим компонентом кода. Найди системные причины, влияющие сразу на несколько кадров.
+
+ЦИКЛ ИСПРАВЛЕНИЯ
+1. Сортируй причины по охвату и площади diff: окружение/шрифт → общий shell/header → layout/grid → панели → типографика → ассеты → цвета/эффекты → уникальные состояния.
+2. Меняй одну причинную группу за раз. До правки запиши гипотезу и список затронутых кадров.
+3. После правки запускай targeted screenshots/diff всех затронутых кадров. При ухудшении откати только свою candidate-правку.
+4. Правку принимай только при измеримом улучшении и отсутствии новой регрессии в соседних состояниях.
+5. Для точной локализации используй overlay, difference heatmap, bounding box, DOM/computed styles и значения Figma. Не подбирай CSS вслепую.
+6. После стабилизации каждой группы запускай полный прогон 22/22. После любой новой правки счёт финальных последовательных прогонов начинается заново.
+
+ПРОВЕРЬ ОТДЕЛЬНО
+- Manrope: реальные font files, веса 400/500/600/700, fallback, font loading, line-height, letter-spacing и метрики кириллицы.
+- Палитру и opacity: светлые поверхности, ink/muted, brand blue, status colors, dark theme, backdrop.
+- Размеры/отступы: 80 px header, крупные 32 px зоны, 4/8/12/16/20/24/32/40 spacing, grid/flex gaps, panel split и clipping.
+- Радиусы/границы/тени: 8/12/16/20/32 px и pill; 1 px borders; modal shadow.
+- Точные logo/avatar/icons, patient image, medical 2D/3D rasters, overlays, crosshairs, DVH/histogram/chart axes.
+- Header, breadcrumbs, search, alphabet, filters, switches, tabs, cards, calendar, tables, forms, toolbars, dropdowns, badges, disabled/active/warning states.
+- Modal geometry, backdrop opacity, centering, z-index, scroll lock and background state.
+- Светлый и тёмный варианты как отдельные кадры, без инверсии или фильтра поверх светлой темы.
+
+ПРОВЕРКИ И ПУБЛИКАЦИЯ
+- Запусти только реально существующие project commands: build, tests и audit. Не объявляй отсутствующий lint/typecheck/Playwright выполненным.
+- Перед publication сохрани rollback и убедись, что публикация разрешена действующими правилами проекта.
+- После publication сними все 22 production routes заново, не переиспользуя локальные actual.
+- Сделай минимум 3 последовательных production-прогона без изменений между ними. Метрики и screenshots должны быть воспроизводимы.
+
+ФИНАЛЬНЫЙ ОТЧЁТ
+Дай: изменённые файлы; системные и поэкранные исправления; build/tests; таблицу 22 route/node с before→after AE%; ссылки/пути на actual/diff/overlay; console/network; три финальных прогона; итог PASS/PARTIAL/BLOCKED. Не скрывай оставшийся diff и не называй HMR, build или визуальное сходство доказательством публикации.</pre>
+      </div>
+    </section>
+
+    <section id="inventory">
+      <div class="section-head"><div><h2>Фактический инвентарь интерфейса</h2><p>Сводка по 22 исходным PNG и текущей реализации. Числа, полученные из кода, всё равно должны быть перепроверены через Figma variables/computed styles.</p></div></div>
+      <div class="inventory">
+        <article><h3>Типографика</h3><p>Manrope, кириллица; веса 400/500/600/700. Основной текст 12–18 px, заголовки 20/26/28 px. Проверять реальный загруженный файл, line box, baseline, wrap и font smoothing.</p></article>
+        <article><h3>Сетка и интервалы</h3><p>1920×1080; header 80 px; повторяются шаги 4/8/12/16/20/24/32/40 px. Картотека — 4 колонки; patient — профиль + main; workspace — canvas + side panel.</p></article>
+        <article><h3>Формы поверхности</h3><p>Карточки, поля, панели и modal используют радиусы 8/12/16/20/32 px и pill. Есть 1 px borders, мягкие тени, overflow/clipping и скруглённый верх main surface.</p></article>
+        <article><h3>Палитра</h3><p>Светлые white/blue-gray surfaces, почти чёрный ink, серые secondary, фирменный синий. Статусы: green/red/purple/yellow. Dark: #16151a и #2b2a2f как наблюдаемые токены реализации.</p><div class="swatches"><span class="swatch"><i style="--c:#fff"></i>#fff</span><span class="swatch"><i style="--c:#eef3f6"></i>#eef3f6</span><span class="swatch"><i style="--c:#15181a"></i>#15181a</span><span class="swatch"><i style="--c:#0068a8"></i>#0068a8</span><span class="swatch"><i style="--c:#16151a"></i>#16151a</span></div></article>
+        <article><h3>Бренд и иконки</h3><p>Логотипы light/dark, user, chevron, add, search, filter, calendar, scale, view switch, tool icons, status glyphs. Точные SVG/PNG предпочтительнее текста и CSS-подделок.</p></article>
+        <article><h3>Растровая графика</h3><p>Avatar пациента, медицинские axial/coronal/sagittal/3D views, дозовые и структурные overlay, crosshairs, viewport labels. Масштабирование и crop проверять по пикселям.</p></article>
+        <article><h3>Динамические элементы</h3><p>Поиск, алфавит, language/view switches, tabs, filters, profile menu, dropdowns, calendar states, toolbars, forms, textarea, modal, enabled/disabled, warning/approved.</p></article>
+        <article><h3>Данные и текст</h3><p>ФИО, даты, breadcrumbs, названия курсов/посещений, таблицы, дозы, координаты, статусы. Любое отличие строки меняет wrap, ширину и итоговый diff.</p></article>
+        <article><h3>Графики</h3><p>DVH-линии и legend, dose histogram bars, optimization chart grid/axes/labels/legend. Проверять plot rectangle, шкалы, series colors, stroke width и пустое состояние.</p></article>
+      </div>
+    </section>
+
+    <section id="elements">
+      <div class="section-head"><div><h2>Промпты по элементам</h2><p>Запускайте после baseline для конкретной причинной группы. Каждый промпт требует измерить затронутые экраны до и после.</p></div></div>
+      <div class="element-grid" id="element-grid"></div>
+    </section>
+
+    <section id="screens">
+      <div class="section-head"><div><h2>Поэкранные промпты: все 22 исходных дизайна</h2><p>Каждая карточка содержит фактический route, Figma node, инвентарь и отдельное задание. Порядок соответствует manifest.json.</p></div></div>
+      <div class="screen-tools" id="screen-filters"></div>
+      <div class="screen-list" id="screen-list"></div>
+    </section>
+
+    <section id="method">
+      <div class="section-head"><div><h2>Почему промпт устроен так</h2><p>Короткая схема, собранная из официальных рекомендаций OpenAI, Figma MCP и Playwright.</p></div></div>
+      <div class="method">
+        <article><h3>Outcome first</h3><p>Сначала результат, критерии успеха, ограничения, evidence и stopping rule; микро-шаги задаются только там, где порядок критичен.</p></article>
+        <article><h3>Точный контекст</h3><p>Большой Figma-файл сначала картируется metadata, затем каждый node читается через design context, variables и screenshot.</p></article>
+        <article><h3>Системные причины</h3><p>Повторные компоненты, variables, Auto Layout и Code Connect уменьшают локальные расхождения и дублирование.</p></article>
+        <article><h3>Одинаковая среда</h3><p>Browser screenshots чувствительны к ОС, версии, headless mode и шрифтам. Baseline и actual сравниваются в закреплённом окружении.</p></article>
+        <article><h3>Проверка результата</h3><p>Каждая candidate-правка принимается по measured delta; после последней правки заново проверяются все 22 production routes.</p></article>
+      </div>
+    </section>
+
+    <section id="sources">
+      <div class="section-head"><div><h2>Источники практик</h2><p>Использованы официальные страницы, а не подборки готовых «магических» промптов.</p></div></div>
+      <div class="sources">
+        <a href="https://developers.openai.com/api/docs/guides/latest-model" target="_blank" rel="noreferrer">OpenAI Model guidance — outcome-first prompts, success criteria, verification, lean instructions</a>
+        <a href="https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/" target="_blank" rel="noreferrer">Figma MCP — tools and prompts: design context, metadata, variables, screenshots, assets, Code Connect</a>
+        <a href="https://developers.figma.com/docs/figma-mcp-server/structure-figma-file/" target="_blank" rel="noreferrer">Figma MCP — components, Variables, semantic names, Auto Layout, annotations</a>
+        <a href="https://developers.figma.com/docs/figma-mcp-server/avoid-large-frames/" target="_blank" rel="noreferrer">Figma MCP — разбивка больших тяжёлых frames на меньшие секции</a>
+        <a href="https://playwright.dev/docs/test-snapshots" target="_blank" rel="noreferrer">Playwright — visual comparisons и требование одинакового rendering environment</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>Версия 1.0 · Сформировано по 22 PNG-эталонам и публичным route Rosatom.</footer>
+
+  <script>
+    const productionBase = 'https://rosatom.wpmix.net';
+    const referenceBase = 'https://marsiandeployer.github.io/rosatom-figma-reference/';
+    const figmaBase = 'https://www.figma.com/design/Y5v86MPzSxAJLZktrC3rBT/РОС--Copy-?node-id=';
+    const visitBase = '/patients/9399-25/courses/2025-03/visits/2025-07-30';
+
+    const elementPrompts = [
+      ['Среда рендера и viewport','Все 22','Зафиксируй Chromium/OS/headless mode, viewport 1920×1080, DPR 1 и zoom 100%. Дождись document.fonts.ready, network idle и двух одинаковых layout measurements. Сними повторный actual одного и того же route трижды. Если PNG или метрики плавают, сначала устрани источник нестабильности; не меняй CSS до детерминированного baseline.'],
+      ['Композиция и крупная геометрия','Все 22','Для reference и actual найди границы header, toolbar/breadcrumbs, main surface, колонок, canvas и side panel. Построй overlay и bounding boxes; выпиши x/y/w/h каждой крупной области. Исправь общий layout primitive и повторно проверь все экраны, использующие его.'],
+      ['Spacing и размеры','Все 22','Сверь padding, margin, gap, grid tracks, высоты строк и элементов по Figma variables/computed styles. Ищи системную шкалу 4/8/12/16/20/24/32/40. Не компенсируй неверный размер соседним отрицательным margin. После правки измерь delta всех затронутых кадров.'],
+      ['Шрифт и метрики текста','Все 22','Подтверди, что загружен Manrope нужного начертания 400/500/600/700 без fallback. Сверь font-size, weight, line-height, letter-spacing, text-transform, wrap, ellipsis и baseline. Проверь network font files и document.fonts.check для кириллицы; затем сравни text-region diff.'],
+      ['Цвет, opacity и фон','Все 22','Получи Figma variables и sampled colors для surface/ink/muted/brand/status. Сверь CSS computed color/background/border-color/opacity и alpha compositing. Для полупрозрачных слоёв сравни результат над тем же фоном; не подменяй точный token похожим hex.'],
+      ['Borders, radius, shadow','Все 22','Сверь толщину и положение border, радиусы 8/12/16/20/32/pill, modal shadow и inner separators. Проверяй clipping углов при одинаковом background. Исправляй component token, если расхождение повторяется.'],
+      ['Логотипы и SVG-иконки','Header и controls','Сопоставь каждый logo/icon с Figma asset и существующим SVG. Сверь intrinsic size, viewBox, stroke width, fill, opacity, alignment и 1× rasterization. Замени Unicode/emoji/CSS-подделки точными ассетами только если measured diff улучшается.'],
+      ['Медицинские изображения','Кадры 11–17, 21','Для каждого axial/coronal/sagittal/3D viewport сопоставь точный source raster, crop, object-fit, transform и overlay. Отдельно проверь crosshair x/y, contour/dose colors, labels и black background. Не растягивай один screenshot на разные состояния.'],
+      ['Header, профиль и breadcrumbs','Большинство кадров','Сверь logo, 80 px header, admin button, profile block, RU/EN switch, scale icon, separators и breadcrumbs. Сравни x-координаты повторных элементов между кадрами; исправь общий shell и перепроверь все его потребители.'],
+      ['Кнопки, switches и toolbar','Все интерактивные кадры','Сверь box size, padding, radius, icon/text gap, active/disabled/hover/focus visuals и hit area. Для segmented controls проверь position active indicator. Зафиксируй состояние до screenshot, чтобы не сравнивать разные variants.'],
+      ['Поля, формы и textarea','Кадры 5–8, 13, 18–20','Сверь label, placeholder, value, input height, internal padding, border, background, caret-free state и grid columns. Проверь точные строки данных и отсутствие browser-native decoration. Modal form должна совпасть при одинаковом scroll position.'],
+      ['Карточки, списки и таблицы','Кадры 1, 3, 4, 9, 10','Сверь число колонок, размеры cards/rows, separators, header backgrounds, alignment и overflow. Текст/даты должны совпадать буквально. Исправь повторный card/table component и проверь cards/table/audit/history states вместе.'],
+      ['Календарная сетка','Кадр 2','Сверь 7 колонок, weekday header, 35 day cells, weekend/muted backgrounds, dates, visit cards, status marks и vertical distribution. Измерь каждую границу grid; не компенсируй неверную высоту события padding ячейки.'],
+      ['Tabs, dropdowns и menu','Кадры 3, 4, 9, 10, 14–17, 21','Сверь track, active tab, dropdown width, menu anchor, selected row, chevrons и z-index. Открой ровно то состояние, которое есть в reference. Проверь, что overlay/menu не сдвигает основной layout.'],
+      ['Modal и backdrop','Кадры 6–8, 13, 19, 20','Измерь modal x/y/w/h, padding, radius, shadow, backdrop RGBA, z-index и background scroll. Сверь close button, title, textarea/form, actions и clipping. Проверяй modal вместе с неизменённым фоном: ошибка backdrop часто даёт diff на весь кадр.'],
+      ['DVH, histogram и optimization chart','Кадры 14, 15, 18, 21','Сверь plot rectangle, grid, axes, tick labels, legend, series order/colors, stroke width, bars и empty state. Используй точные данные/paths из дизайна; CSS-эскиз графика без совпадающей геометрии не считается реализацией.'],
+      ['Status, badge, warning, disabled','Кадры 2–4, 11–21','Сверь active patient, calendar statuses, structure warning, approved plan, disabled buttons и цветные dose cards. Проверяй icon, текст, border/background, opacity и состояние одновременно; не выводи общий green для разных семантик.'],
+      ['Dark theme','Кадр 22','Сверь отдельные dark tokens, dark logo/control assets, surfaces, borders, text hierarchy и white patient cards. Не делай dark через filter/invert поверх светлой темы. Проверь contrast, но не меняй эталонные цвета ради произвольного улучшения.'],
+      ['Слои, clipping и scroll','Все 22','Составь stacking map для header, menus, medical overlays, backdrop и modal. Сверь overflow hidden/auto, sticky/fixed и scrollbar presence. Любой scrollbar меняет доступную ширину: устрани его или воспроизведи эталон до геометрических правок.'],
+      ['Финальная регрессия','Все 22','После последней candidate-правки заново сними 22 local и затем 22 production actual. Сохрани AE/RMSE/diff/overlay, проверь console/network и повтори production-прогон трижды без изменений. PASS только при выполненном gate; иначе PARTIAL с точными остатками.']
+    ];
+
+    const screens = [
+      ['Картотека — светлая тема','8:637','Главные экраны','assets/page-1-frame-57-8-637-1920x1080.png','/',['header','поиск','алфавит','filter','view switch','patient cards'],['4-колоночная сетка карточек','группы А/Б/В/Г и related letters','скруглённая светло-серая content surface']],
+      ['Календарь посещений','12:958','Календарь','assets/page-1-frame-60-12-958-1920x1080.png','/calendar?view=month&date=2025-12',['header','month switch','7×5 grid','weekends','visit cards','status icons'],['точная высота day cells','события прижаты к низу отдельных ячеек','разные статусы и muted previous-month days']],
+      ['Посещения — карточки','11:295','Пациент','assets/page-1-frame-59-11-295-1920x1080.png','/patients/9399-25?tab=visits&mode=cards',['profile','tabs','course cards','tooltips','actions'],['левая карточка пациента','четыре tab','две course cards и иконки действий']],
+      ['Посещения — таблица','32:1574','Пациент','assets/page-1-frame-66-32-1574-1920x1080.png','/patients/9399-25?tab=visits&mode=table',['profile','tabs','course card','visits table','status'],['table columns и row heights','approved statuses','режим table не должен менять общий shell']],
+      ['Сервер DICOM','27:307','Администрирование','assets/page-1-frame-61-27-307-1920x1080.png','/admin/server-dicom',['header','back control','settings sidebar','server fields','check button'],['sidebar active item','три поля сервера','connection status block']],
+      ['Редактирование пациента — компактная форма','27:891','Модальные окна','assets/page-1-frame-63-27-891-1920x1080.png','/patients/9399-25?modal=edit&variant=compact',['backdrop','patient modal','avatar upload','gender switch','fields','save'],['крупный modal по центру','background patient screen','нижняя save action']],
+      ['Редактирование пациента — расширенная форма','32:658','Модальные окна','assets/page-1-frame-64-32-658-1920x1080.png','/patients/9399-25?modal=edit&variant=expanded',['backdrop','expanded form','diagnoses','dropdown','comment','save'],['больше полей и секций','точная вертикальная плотность','diagnosis row и extra fields']],
+      ['Загрузка исследования','32:1214','Модальные окна','assets/page-1-frame-65-32-1214-1920x1080.png','/patients/9399-25?modal=upload-study',['backdrop','upload modal','2D option','3D option','close'],['две равные option cards','иконки исследований','modal shadow и backdrop']],
+      ['Журнал изменений','40:486','Пациент','assets/page-1-frame-67-40-486-1920x1080.png','/patients/9399-25?tab=audit',['profile','tabs','audit table','rows'],['active audit tab','три столбца','одинаковые row heights и separators']],
+      ['История лечения','40:804','Пациент','assets/page-1-frame-68-40-804-1920x1080.png','/patients/9399-25?tab=treatment-history',['profile','tabs','history table'],['active treatment history tab','две колонки','main title отсутствует в этом state']],
+      ['Оконтуривание','79:506','Рабочее место','assets/page-1-frame-69-79-506-1920x1080.png',`${visitBase}/contouring`,['breadcrumbs','4 medical views','crosshairs','tools','structure list'],['2×2 black canvas','axial/3D/coronal/sagittal','right display settings panel']],
+      ['Реконструкция аппликатора','80:1157','Рабочее место','assets/page-1-frame-71-80-1157-1920x1080.png',`${visitBase}/reconstruction`,['breadcrumbs','4 medical views','applicator card','coordinates'],['pink selected applicator card','rotation/coordinate fields','disabled bottom actions']],
+      ['Постановка задачи','81:625','Рабочее место + modal','assets/page-1-frame-72-81-625-1920x1080.png',`${visitBase}/reconstruction?modal=task-setup`,['medical background','backdrop','setup modal','dose rows','actions'],['широкий высокий modal','metadata row','prescribed/limited doses','background remains aligned']],
+      ['План лечения и histogram','81:1530','Рабочее место','assets/page-1-frame-73-81-1530-1920x1080.png',`${visitBase}/reconstruction?panel=treatment-plan&chart=dose-histogram`,['3 medical views','dose histogram','treatment panel','applicator controls'],['histogram в top-right viewport','colored dose overlays','right panel density']],
+      ['Оконтуривание — DVH','82:2397','Рабочее место','assets/page-1-frame-2087328288-82-2397-1920x1080.png',`${visitBase}/contouring?chart=dvh`,['3 medical views','DVH graph','legend','treatment panel'],['многоцветные curves','legend order','graph grid/axes и dose overlays']],
+      ['Реконструкция — 3D план','82:2825','Рабочее место','assets/page-1-frame-2087328289-82-2825-1920x1080.png',`${visitBase}/reconstruction?panel=treatment-plan&view=3d`,['axial','3D viewport','coronal','sagittal','treatment panel'],['точный 3D crop','viewport toolbar','overlay colors должны совпасть между views']],
+      ['Ограничения структур','82:3843','Рабочее место','assets/page-1-frame-2087328290-82-3843-1920x1080.png',`${visitBase}/contouring?panel=structures&state=constraint-warning`,['3 medical views','DVH','structure list','warning state'],['expanded dose rows','красное предупреждение HR-CTV','structure list colors/order']],
+      ['Параметры оптимизации','87:906','Оптимизация','assets/page-1-frame-2087328291-87-906-1920x1080.png',`${visitBase}/optimization`,['parameter form','dose constraints','empty chart','legend','bottom actions'],['двухколоночный layout','empty grid with axes','fixed bottom action bar']],
+      ['Отмена посещения','87:2266','Оптимизация + modal','assets/page-1-frame-2087328292-87-2266-1920x1080.png',`${visitBase}/optimization?modal=cancel-visit`,['optimization background','backdrop','cancel modal','textarea','submit'],['modal exact center/size','darkened chart/form','cancel-specific title/button']],
+      ['Завершение посещения','87:2785','Оптимизация + modal','assets/page-1-frame-2087328293-87-2785-1920x1080.png',`${visitBase}/optimization?modal=complete-visit`,['optimization background','backdrop','complete modal','textarea','submit'],['геометрия равна cancel modal','другие title/copy/button','background unchanged']],
+      ['Дозовое распределение','87:3166','Результат','assets/page-1-frame-2087328294-87-3166-1920x1080.png',`${visitBase}/dose-distribution?plan=ordinary&status=approved`,['medical views','DVH','result panel','approved dropdown menu'],['open dropdown menu','approved plan row','DVH + colored dose overlays']],
+      ['Картотека — тёмная тема','2:69','Главные экраны','assets/page-1-frame-55-2-69-dark-1920x1080.png','/?theme=dark',['dark header','dark controls','search','alphabet','patient cards'],['отдельный dark logo/control assets','почти чёрные surfaces','white patient cards и светлая typography']]
+    ];
+
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[character]);
+    const nodeLink = node => figmaBase + node.replace(':','-');
+    const screenPrompt = screen => {
+      const [title,node,,png,path,elements,hotspots] = screen;
+      return `Исправь экран «${title}» до pixel-perfect совпадения.\n\nFigma node: ${node}\nReference PNG: ${referenceBase + png}\nProduction: ${productionBase + path}\nViewport: 1920×1080, DPR 1.\n\nСначала вызови Figma MCP get_design_context, get_variable_defs и get_screenshot для node ${node}; для тяжёлого frame запроси логические дочерние секции отдельно. Сними текущий production actual, absolute diff и 50/50 overlay. Зафиксируй AE/RMSE и bounding box отличий до правки.\n\nОбязательные элементы: ${elements.join(', ')}.\nКритические зоны: ${hotspots.join('; ')}.\n\nПроверь точные тексты/данные, геометрию x/y/w/h, Manrope и веса, line-height, spacing, colors/opacity, borders/radii/shadows, SVG/PNG, clipping, z-index и состояние controls. Найди первую общую причинную границу в DOM/CSS/assets. Измени только связанную причинную группу, затем повтори screenshot/diff этого кадра и всех экранов, использующих изменённый компонент. При ухудшении откати candidate.\n\nНе меняй reference и diff threshold. Не называй экран готовым без открытых reference/actual/diff/overlay, отсутствия console/network ошибок и измеримого результата. Цель AE=0; иначе отчитай PARTIAL с остаточными зонами и точными метриками.`;
+    };
+
+    const elementGrid = document.querySelector('#element-grid');
+    elementGrid.innerHTML = elementPrompts.map(([title,scope,prompt], index) => `<article class="element-card"><div class="panel-head"><h3>${index + 1}. ${escapeHtml(title)}</h3><button class="copy" data-copy="element-${index}">Скопировать</button></div><div class="body"><strong>${escapeHtml(scope)}</strong><p>${escapeHtml(prompt)}</p></div><pre id="element-${index}">${escapeHtml(prompt)}</pre></article>`).join('');
+
+    const categories = ['Все', ...new Set(screens.map(screen => screen[2]))];
+    const filters = document.querySelector('#screen-filters');
+    filters.innerHTML = categories.map((category,index) => `<button class="filter" aria-pressed="${index === 0}" data-filter="${escapeHtml(category)}">${escapeHtml(category)}</button>`).join('');
+
+    const screenList = document.querySelector('#screen-list');
+    screenList.innerHTML = screens.map((screen,index) => {
+      const [title,node,category,png,path,elements,hotspots] = screen;
+      return `<details class="screen-card" data-category="${escapeHtml(category)}"><summary><span class="number">${String(index + 1).padStart(2,'0')}</span><span><strong>${escapeHtml(title)}</strong><span class="screen-meta"><br>Node ${escapeHtml(node)} · ${escapeHtml(category)}</span></span><span class="tags">${elements.map(element => `<span class="tag">${escapeHtml(element)}</span>`).join('')}</span><span>Открыть ↓</span></summary><div class="screen-body"><div class="links"><a href="${escapeHtml(referenceBase + png)}" target="_blank" rel="noreferrer">Reference PNG</a><a href="${escapeHtml(productionBase + path)}" target="_blank" rel="noreferrer">Production route</a><a href="${escapeHtml(nodeLink(node))}" target="_blank" rel="noreferrer">Figma node</a></div><h4>Что есть в дизайне</h4><ul>${elements.map(element => `<li>${escapeHtml(element)}</li>`).join('')}</ul><h4>Критические зоны сверки</h4><ul>${hotspots.map(hotspot => `<li>${escapeHtml(hotspot)}</li>`).join('')}</ul><div class="panel" style="margin-top:18px"><div class="panel-head"><h3>Промпт для этого экрана</h3><button class="copy" data-copy="screen-prompt-${index}">Скопировать</button></div><pre id="screen-prompt-${index}">${escapeHtml(screenPrompt(screen))}</pre></div></div></details>`;
+    }).join('');
+
+    async function copyText(value) {
+      if (navigator.clipboard && window.isSecureContext) {
+        try { await navigator.clipboard.writeText(value); return true; } catch {}
+      }
+      const field = document.createElement('textarea');
+      field.value = value; field.setAttribute('readonly', '');
+      field.style.position = 'fixed'; field.style.opacity = '0';
+      document.body.append(field); field.select();
+      const copied = document.execCommand('copy'); field.remove();
+      return copied;
+    }
+
+    document.addEventListener('click', async event => {
+      const copyButton = event.target.closest('[data-copy]');
+      if (copyButton) {
+        const target = document.getElementById(copyButton.dataset.copy);
+        const copied = await copyText(target.innerText);
+        copyButton.classList.add('copied'); copyButton.textContent = copied ? 'Скопировано' : 'Выделите текст вручную';
+        setTimeout(() => { copyButton.classList.remove('copied'); copyButton.textContent = 'Скопировать'; }, 1400);
+      }
+      const filterButton = event.target.closest('[data-filter]');
+      if (filterButton) {
+        document.querySelectorAll('[data-filter]').forEach(button => button.setAttribute('aria-pressed', String(button === filterButton)));
+        document.querySelectorAll('.screen-card').forEach(card => card.hidden = filterButton.dataset.filter !== 'Все' && card.dataset.category !== filterButton.dataset.filter);
+      }
+    });
+  </script>
+</body>
+</html>

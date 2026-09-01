@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
   <title>Росатом — эталоны Figma</title>
   <style>
     :root { color-scheme: light; font-family: Inter, Arial, sans-serif; background: #f3f5f7; color: #15191d; }
@@ -13,6 +14,8 @@
     header { padding: 32px 0 20px; }
     h1 { margin: 0 0 8px; font-size: clamp(26px, 3vw, 42px); letter-spacing: -.03em; }
     header p { margin: 0; color: #66717b; }
+    .header-links { display:flex; flex-wrap:wrap; gap:10px; margin-top:16px; }
+    .header-links a { padding:8px 11px; border:1px solid #d7dde2; border-radius:8px; background:#fff; color:#1d596d; text-decoration:none; font-size:13px; font-weight:700; }
     nav { position: sticky; top: 0; z-index: 2; padding: 12px 0; background: rgb(243 245 247 / 94%); backdrop-filter: blur(10px); }
     .frame-list { display: flex; gap: 8px; padding: 0; margin: 0; overflow-x: auto; list-style: none; }
     .frame-list a { display: block; white-space: nowrap; padding: 8px 11px; border: 1px solid #d7dde2; border-radius: 8px; background: #fff; color: #1d596d; text-decoration: none; font-size: 13px; }
@@ -31,6 +34,7 @@
   <header>
     <h1>Эталонные макеты Figma</h1>
     <p>22 макета из Figma, экспорт 1× без изменения размера. Это эталоны дизайна, а не снимки работающего сайта. Все макеты: desktop 1920 × 1080.</p>
+    <div class="header-links"><a href="prompts.html">Промпты pixel-perfect для Codex</a><a href="compare.html">Ручная сверка с production</a></div>
   </header>
   <nav aria-label="Список макетов"><ol class="frame-list" id="frame-list"></ol></nav>
   <main id="catalog"><p>Загрузка каталога…</p></main>

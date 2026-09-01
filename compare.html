@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
   <title>Ручная сверка Rosatom — 22 экрана</title>
   <style>
     :root { color-scheme: light; --ink:#172126; --muted:#66747d; --line:#dce4e8; --paper:#f5f7f8; --white:#fff; --blue:#0878b9; --green:#18794e; }
@@ -17,7 +18,8 @@
     .track { height:8px; overflow:hidden; border-radius:999px; background:#e5ecef; }
     .fill { width:0; height:100%; background:var(--green); transition:width .2s; }
     main { max-width:1540px; margin:24px auto 60px; padding:0 24px; }
-    .tools { display:flex; gap:8px; margin-bottom:18px; }
+    .tools { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:18px; }
+    .tools a { min-height:38px; display:inline-flex; align-items:center; padding:0 14px; border:1px solid #b9c7ce; border-radius:8px; background:#fff; color:var(--ink); font-weight:700; text-decoration:none; }
     button { min-height:38px; border:1px solid #b9c7ce; border-radius:8px; background:#fff; color:var(--ink); padding:0 14px; font-weight:700; cursor:pointer; }
     button:hover { border-color:#70838d; }
     button:active { transform:translateY(1px); }
@@ -60,7 +62,7 @@
     </div>
   </header>
   <main>
-    <div class="tools"><button type="button" id="show-all">Показать все</button><button type="button" id="show-pending">Только непроверенные</button></div>
+    <div class="tools"><a href="prompts.html">Промпты pixel-perfect</a><a href="index.html">Все исходные PNG</a><button type="button" id="show-all">Показать все</button><button type="button" id="show-pending">Только непроверенные</button></div>
     <div id="list"></div>
   </main>
   <script>
