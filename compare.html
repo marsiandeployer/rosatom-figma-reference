@@ -53,7 +53,7 @@
     <div class="bar">
       <div>
         <h1>Ручная сверка Rosatom</h1>
-        <div class="subtitle">22 экрана, сгруппированные по типу интерфейса. Сначала откройте PNG, затем соответствующий экран сайта.</div>
+        <div class="subtitle">Для каждого из 22 экранов можно открыть точный фрейм в Figma, эталонный PNG и соответствующую страницу вёрстки.</div>
       </div>
       <div class="progress" aria-live="polite">
         <div class="progress-line"><span>Проверено</span><span id="progress-text">0 из 22</span></div>
@@ -68,6 +68,7 @@
   <script>
     const referenceBase = 'https://marsiandeployer.github.io/rosatom-figma-reference/';
     const siteBase = 'https://rosatom.wpmix.net';
+    const figmaBase = 'https://www.figma.com/design/Y5v86MPzSxAJLZktrC3rBT/РОС--Copy-?node-id=';
     const groups = [
       ['Главные экраны', [
         ['Картотека — светлая тема','8:637','assets/page-1-frame-57-8-637-1920x1080.png','/'],
@@ -111,11 +112,12 @@
     let number = 0;
     for (const [groupName, screens] of groups) {
       const section = document.createElement('section'); section.className = 'group';
-      section.innerHTML = `<h2 class="group-title">${groupName} <span class="meta">— ${screens.length}</span></h2><div class="head"><span>№</span><span>Оригинал PNG</span><span>Экран сайта</span><span>Статус</span><span>Комментарий</span></div>`;
+      section.innerHTML = `<h2 class="group-title">${groupName} <span class="meta">— ${screens.length}</span></h2><div class="head"><span>№</span><span>Figma и PNG</span><span>Экран сайта</span><span>Статус</span><span>Комментарий</span></div>`;
       for (const [name, frame, png, path] of screens) {
         number += 1;
+        const figmaUrl = `${figmaBase}${frame.replace(':', '-')}&p=f`;
         const row = document.createElement('div'); row.className = 'row'; row.dataset.frame = frame;
-        row.innerHTML = `<div class="num">${number}</div><div><span class="screen-name">${name}</span><a href="${referenceBase + png}" target="_blank" rel="noopener">Открыть PNG 1920 × 1080</a><a class="direct-url" href="${referenceBase + png}" target="_blank" rel="noopener">${referenceBase + png}</a><div class="frame">Frame ${frame}</div></div><div><a href="${siteBase + path}" target="_blank" rel="noopener">${siteBase + path}</a></div><div><button class="ready" type="button" aria-pressed="false">Готово</button></div><div><textarea aria-label="Комментарий к экрану ${number}" placeholder="Что проверить или исправить"></textarea></div>`;
+        row.innerHTML = `<div class="num">${number}</div><div><span class="screen-name">${name}</span><a href="${figmaUrl}" target="_blank" rel="noopener">Открыть экран в Figma</a><div class="frame">Node ID: ${frame}</div><a href="${referenceBase + png}" target="_blank" rel="noopener">Открыть PNG 1920 × 1080</a><a class="direct-url" href="${referenceBase + png}" target="_blank" rel="noopener">${referenceBase + png}</a></div><div><a href="${siteBase + path}" target="_blank" rel="noopener">${siteBase + path}</a></div><div><button class="ready" type="button" aria-pressed="false">Готово</button></div><div><textarea aria-label="Комментарий к экрану ${number}" placeholder="Что проверить или исправить"></textarea></div>`;
         const button = row.querySelector('.ready'); const note = row.querySelector('textarea');
         const item = state[frame] || {}; button.setAttribute('aria-pressed', String(Boolean(item.done))); note.value = item.note || ''; row.classList.toggle('done', Boolean(item.done));
         button.addEventListener('click', () => { state[frame] = {...state[frame], done: button.getAttribute('aria-pressed') !== 'true', note: note.value}; save(); refresh(); });
