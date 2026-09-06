@@ -35,6 +35,8 @@
     .frame { color:var(--muted); font-size:12px; }
     a { color:#075f91; overflow-wrap:anywhere; text-underline-offset:3px; }
     .direct-url { display:block; margin-top:5px; max-width:390px; color:var(--muted); font-size:11px; line-height:1.35; word-break:break-all; }
+    /* Ссылки на PNG оставлены в разметке для быстрого восстановления, но скрыты из рабочего вида. */
+    .screenshot-link { display:none; }
     .ready { width:100%; }
     .ready[aria-pressed="true"] { border-color:var(--green); background:var(--green); color:#fff; }
     textarea { width:100%; min-height:54px; resize:vertical; border:1px solid #b9c7ce; border-radius:7px; padding:9px 10px; font:inherit; color:var(--ink); background:#fff; }
@@ -117,7 +119,7 @@
         number += 1;
         const figmaUrl = `${figmaBase}${frame.replace(':', '-')}&p=f`;
         const row = document.createElement('div'); row.className = 'row'; row.dataset.frame = frame;
-        row.innerHTML = `<div class="num">${number}</div><div><span class="screen-name">${name}</span><a href="${figmaUrl}" target="_blank" rel="noopener">Открыть экран в Figma</a><div class="frame">Node ID: ${frame}</div><a href="${referenceBase + png}" target="_blank" rel="noopener">Открыть PNG 1920 × 1080</a><a class="direct-url" href="${referenceBase + png}" target="_blank" rel="noopener">${referenceBase + png}</a></div><div><a href="${siteBase + path}" target="_blank" rel="noopener">${siteBase + path}</a></div><div><button class="ready" type="button" aria-pressed="false">Готово</button></div><div><textarea aria-label="Комментарий к экрану ${number}" placeholder="Что проверить или исправить"></textarea></div>`;
+        row.innerHTML = `<div class="num">${number}</div><div><span class="screen-name">${name}</span><a href="${figmaUrl}" target="_blank" rel="noopener">Открыть экран в Figma</a><div class="frame">Node ID: ${frame}</div><a class="screenshot-link" href="${referenceBase + png}" target="_blank" rel="noopener">Открыть PNG 1920 × 1080</a><a class="direct-url screenshot-link" href="${referenceBase + png}" target="_blank" rel="noopener">${referenceBase + png}</a></div><div><a href="${siteBase + path}" target="_blank" rel="noopener">${siteBase + path}</a></div><div><button class="ready" type="button" aria-pressed="false">Готово</button></div><div><textarea aria-label="Комментарий к экрану ${number}" placeholder="Что проверить или исправить"></textarea></div>`;
         const button = row.querySelector('.ready'); const note = row.querySelector('textarea');
         const item = state[frame] || {}; button.setAttribute('aria-pressed', String(Boolean(item.done))); note.value = item.note || ''; row.classList.toggle('done', Boolean(item.done));
         button.addEventListener('click', () => { state[frame] = {...state[frame], done: button.getAttribute('aria-pressed') !== 'true', note: note.value}; save(); refresh(); });
