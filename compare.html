@@ -64,7 +64,7 @@
     </div>
   </header>
   <main>
-    <div class="tools"><a href="prompts.html">Промпты pixel-perfect</a><a href="index.html">Все исходные PNG</a><button type="button" id="show-all">Показать все</button><button type="button" id="show-pending">Только непроверенные</button></div>
+    <div class="tools"><a href="prompts.html">Промпты pixel-perfect</a><a href="index.html">Все исходные PNG</a><button type="button" id="show-all">Показать все</button><button type="button" id="show-pending">Только непроверенные</button><button type="button" id="export-json">Скачать JSON</button></div>
     <div id="list"></div>
   </main>
   <script>
@@ -136,6 +136,38 @@
     }
     document.querySelector('#show-all').addEventListener('click', () => document.querySelectorAll('.row').forEach(row => row.hidden=false));
     document.querySelector('#show-pending').addEventListener('click', () => document.querySelectorAll('.row').forEach(row => row.hidden=Boolean(state[row.dataset.frame]?.done)));
+    document.querySelector('#export-json').addEventListener('click', () => {
+      let exportNumber = 0;
+      const screens = groups.flatMap(([group, items]) => items.map(([name, frame, png, path]) => {
+        exportNumber += 1;
+        return {
+          number: exportNumber,
+          group,
+          name,
+          nodeId: frame,
+          figmaUrl: `${figmaBase}${frame.replace(':', '-')}&p=f`,
+          pngUrl: referenceBase + png,
+          siteUrl: siteBase + path,
+          done: Boolean(state[frame]?.done),
+          note: state[frame]?.note || ''
+        };
+      }));
+      const payload = {
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        source: location.href,
+        screens
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2) + '\n'], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `rosatom-review-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
     refresh();
   </script>
 </body>
